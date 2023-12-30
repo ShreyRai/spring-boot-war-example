@@ -1,57 +1,49 @@
-pipeline {
+pipeline{
     agent any
-     tools {
-        maven 'Maven' 
-        }
-    stages {
+    tools{
+        maven "Maven"
+    }
+    stages{
         stage("Test"){
             steps{
-                // mvn test
+                echo "Testing has begun."
                 sh "mvn test"
-                slackSend channel: 'youtubejenkins', message: 'Job Started'
-                
             }
-            
         }
         stage("Build"){
             steps{
+                echo "Building has been started..."
                 sh "mvn package"
-                
             }
-            
         }
-        stage("Deploy on Test"){
+        stage("Test-deploy"){
             steps{
-                // deploy on container -> plugin
-                deploy adapters: [tomcat9(credentialsId: 'tomcatserverdetails1', path: '', url: 'http://192.168.0.118:8080')], contextPath: '/app', war: '**/*.war'
-              
+                echo "Deployment to the test server is in process..."
+                deploy adapters: [tomcat9(credentialsId: 'tomcat9details', path: '', url: 'http://192.168.1.8:8080')], contextPath: '/pacapp', war: '**/*.war'
             }
-            
         }
-        stage("Deploy on Prod"){
-             input {
-                message "Should we continue?"
-                ok "Yes we Should"
-            }
-            
+        stage("permit"){
+                input{
+                    message "Do you want to proceed?"
+                    ok "Yes, proceed"
+                }
+        }
+        stage("Prod-deploy"){
             steps{
-                // deploy on container -> plugin
-                deploy adapters: [tomcat9(credentialsId: 'tomcatserverdetails1', path: '', url: 'http://192.168.0.119:8080')], contextPath: '/app', war: '**/*.war'
-
+                echo "Permission has been granted and deployment onto the prod server has begun..."
+                deploy adapters: [tomcat9(credentialsId: 'tomcat9details', path: '', url: 'http://172.22.133.98:8080')], contextPath: '/pacapp', war: '**/*.war'
             }
         }
     }
     post{
-        always{
-            echo "========always========"
-        }
-        success{
-            echo "========pipeline executed successfully ========"
-             slackSend channel: 'youtubejenkins', message: 'Success'
-        }
-        failure{
-            echo "========pipeline execution failed========"
-             slackSend channel: 'youtubejenkins', message: 'Job Failed'
-        }
+            always{
+                echo "The task has been completed, please check the below status of the builds"
+            }
+            success{
+                echo "War file has been deployed to prod successfully"
+            }
+            failure{
+                echo "Deployment has been failed, please check the logs for the errors"
+            }
     }
 }
