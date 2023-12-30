@@ -27,6 +27,9 @@ pipeline{
                     message "Do you want to proceed?"
                     ok "Yes, proceed"
                 }
+                steps{
+                    echo "Proceeding"
+                }
         }
         stage("Prod-deploy"){
             steps{
